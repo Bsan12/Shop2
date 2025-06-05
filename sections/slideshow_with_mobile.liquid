@@ -1,0 +1,73 @@
+{{ 'section-image-banner.css' | asset_url | stylesheet_tag }}
+{{ 'component-slider.css' | asset_url | stylesheet_tag }}
+{{ 'component-slideshow.css' | asset_url | stylesheet_tag }}
+
+{%- if section.settings.slide_height == 'adapt_image' and section.blocks.first.settings.image != blank -%}
+  {%- style -%}
+    @media screen and (max-width: 749px) {
+      #Slider-{{ section.id }}::before,
+      #Slider-{{ section.id }} .media::before,
+      #Slider-{{ section.id }}:not(.banner--mobile-bottom) .banner__content::before {
+        padding-bottom: {{ 1 | divided_by: (section.blocks.first.settings.image_mobile | default: section.blocks.first.settings.image).aspect_ratio | times: 100 }}%;
+        content: '';
+        display: block;
+      }
+    }
+
+    @media screen and (min-width: 750px) {
+      #Slider-{{ section.id }}::before,
+      #Slider-{{ section.id }} .media::before {
+        padding-bottom: {{ 1 | divided_by: section.blocks.first.settings.image.aspect_ratio | times: 100 }}%;
+        content: '';
+        display: block;
+      }
+    }
+  {%- endstyle -%}
+{%- endif -%}
+
+{% comment %} ... truncated for brevity ... {% endcomment %}
+
+{% for block in section.blocks %}
+  <div class="slideshow__media banner__media media">
+    {%- if block.settings.image -%}
+      {%- liquid
+        assign height = block.settings.image.width | divided_by: block.settings.image.aspect_ratio | round
+        assign sizes = '100vw'
+        assign widths = '375, 550, 750, 1100, 1500, 1780, 2000, 3000, 3840'
+        assign fetch_priority = 'auto'
+        if section.index == 1 and forloop.first
+          assign fetch_priority = 'high'
+        endif
+      -%}
+      <picture>
+        {%- if block.settings.image_mobile -%}
+          <source media="(max-width: 749px)" srcset="{{ block.settings.image_mobile | image_url: width: 750 }}">
+        {%- endif -%}
+        <img src="{{ block.settings.image | image_url: width: 3840 }}"
+             height="{{ height }}"
+             sizes="{{ sizes }}"
+             widths="{{ widths }}"
+             {% unless forloop.first %}loading="lazy"{% endunless %}
+             {% if forloop.first %}fetchpriority="{{ fetch_priority }}"{% endif %}>
+      </picture>
+    {%- endif -%}
+  </div>
+{% endfor %}
+
+{% schema %}
+{
+  "name": "Slideshow with Mobile",
+  "tag": "section",
+  "class": "section",
+  "blocks": [
+    {
+      "type": "slide",
+      "name": "Slide",
+      "settings": [
+        {"type": "image_picker", "id": "image", "label": "Desktop image"},
+        {"type": "image_picker", "id": "image_mobile", "label": "Mobile image"}
+      ]
+    }
+  ]
+}
+{% endschema %}
